@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>チャットアプリ課題</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- コンテンツ表示画面 -->
+    <h1>チャットアプリ</h1>
+    <div>
+        <div>
+            <input type="text" id="uname" placeholder="名前を入力してください">
+        </div>
+        <div>
+            <textarea id="text" placeholder="文章を入力してください"></textarea>
+        </div>
+        <button id="send">送信</button>
+        <div id="output" style="overflow: auto;height: 300px;"></div>
+    </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved, query,orderByChild }
+        from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPtSkztenvAdL_9k1KCAbjqVTUGVakYrA",
+            authDomain: "chat-app-c9ded.firebaseapp.com",
+            projectId: "chat-app-c9ded",
+            storageBucket: "chat-app-c9ded.firebasestorage.app",
+            messagingSenderId: "156324071910",
+            appId: "1:156324071910:web:d4068665ce665b068d6e27"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app); //RealtimeDBに接続
+        const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+
+        // タイムスタンプを数値で取得する関数
+            function getTimestamp() {
+                return Date.now(); // エポックタイム（1970年1月1日からのミリ秒）
+            }
+
+            //データ登録(Click)
+            $("#send").on("click", function () {
+                const timestamp = new Date().toISOString(); // タイムスタンプを取得
+                const msg = {
+                    uname: $("#uname").val(),
+                    text: $("#text").val(),
+                    timestamp: timestamp // タイムスタンプを設定
+                }
+                console.log("送信時刻:", timestamp); // タイムスタンプをコンソールに表示
+                const newPostRef = push(dbRef); //ユニークKEYを生成
+                set(newPostRef, msg);           //"chat"にユニークKEYをつけてオブジェクトデータを登録
+            });
+
+            //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+            const dbQuery = query(dbRef, orderByChild('timestamp'));
+            onChildAdded(dbQuery, function (data) {
+                const msg = data.val();
+                const key = data.key;
+              let h = `
+                <div>
+                    <p>${msg.uname}</p>
+                    <p>${msg.text}</p>
+                    <p>${new Date(msg.timestamp).toLocaleString()}</p>
+                </div>
+                `;
+                $("#output").append(h);
+            });
+</script>
+</body>
+</html>
